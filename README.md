@@ -24,7 +24,7 @@ Here is a basic outline of the procedure for using the quadratic sieve to factor
 
 For our quadratic sieve, built in Python, we began by implementing a function to determine the proper bound \( B \) as a function of the integer to factor \( n \). The value of \( B \) also dictates which integer values are considered \( B \)-smooth. Our function is based on the recommendation of an efficient \( B \)-value by Carl Pomerance in his paper on “Smooth Numbers and the Quadratic Sieve.” 
 
-**Recommended Bound:** (image taken from the article)
+**Recommended Bound:** ![Alt text](bound.png)
 
 ### Primality Testing
 
@@ -87,75 +87,3 @@ Plots of runtime against the number of digits show a linear relationship between
 
 1. Carl Pomerance, "Smooth Numbers and the Quadratic Sieve," 2008.
 2. A.O.L. Atkin and D.J. Bernstein, "Prime Sieves Using Binary Quadratic Forms," Mathematics of Computation, vol. 73, no. 246, 2004, pp. 1023-1030.
-
----
-
-## Appendix A (Code)
-
-The complete Quadratic Sieve code is below. It is recommended to run the code in the Jupyter Notebook for interpretability. The notebook can be accessed [here](https://drive.google.com/file/d/1fQr1UaM464-0TDUtHIOQgXBrjZ-zGWH-/view?usp=sharing). It is fastest when downloaded and run locally on your machine.
-
-```python
-import math
-import numpy as np
-import time
-
-# Test values
-n = 10000 # NUMBER TO FACTOR
-start_time = time.time()
-
-# Set the bound according to n
-def little_o_of_1(n):  # not needed but for authenticity to paper
-    return 1 / math.log(n)
-
-temp = math.log(n) * math.log(math.log(n))
-B = int(math.exp(float(0.5 + little_o_of_1(n)) * math.sqrt(temp)))
-print(B)
-
-def sieve_of_atkin(limit):
-    """
-    This function implements the Sieve of Atkin to find all prime numbers up to the specified limit.
-    """
-    if limit < 2:
-        return []
-
-    sieve = [False] * (limit + 1)
-    sqrt_limit = int(limit ** 0.5)
-
-    for x in range(1, sqrt_limit + 1):
-        for y in range(1, sqrt_limit + 1):
-            n = 4*x*x + y*y
-            if n <= limit and (n % 12 == 1 or n % 12 == 5):
-                sieve[n] = not sieve[n]
-
-            n = 3*x*x + y*y
-            if n <= limit and n % 12 == 7:
-                sieve[n] = not sieve[n]
-
-            n = 3*x*x - y*y
-            if x > y and n <= limit and n % 12 == 11:
-                sieve[n] = not sieve[n]
-
-    for a in range(5, sqrt_limit + 1):
-        if sieve[a]:
-            for b in range(a*a, limit + 1, a*a):
-                sieve[b] = False
-
-    primes = [2, 3] 
-    primes += [i for i in range(3, limit + 1) if sieve[i]]
-
-    return primes
-
-S = sieve_of_atkin(B)
-print(S)
-print(len(S))
-
-def gen_x(n, p, r):
-    """
-    Generate a list of x values that are likely candidates for being smooth numbers.
-    """
-    sqrt_n = math.sqrt((1 + 2 * r) * n)
-    sqrt_2n = math.sqrt((2 + 2 * r) * n)
-    return [math.ceil(sqrt_n + i) for i in range(p + 1)] + \
-           [math.ceil(sqrt_2n + i) for i in range(p + 1)]
-
-def find_b_smooths(n,
